@@ -71,20 +71,22 @@ pub struct Color {
 pub fn spread_fire(src: u32, fire_pixels: &[u32]) {
     let pixel = fire_pixels[src as usize];
     if pixel == 0 {
-        println!("It's zero")
         // fire_pixels[src as usize - FIRE_WIDTH as usize] = 0;
     } else {
         let mut rng = rand::thread_rng();
         let random_num: f64 = rng.gen(); // generates a float between 0 and 1
+        let random_index = (random_num * 3.0).round() as u32 & 3;
+        let distance = src - random_index + 1;
+        // set fire pixels here
 
-
+        // JS Code
         // var randIdx = Math.round(Math.random() * 3.0) & 3;
         // var dst = src - randIdx + 1;
         // firePixels[dst - FIRE_WIDTH ] = pixel - (randIdx & 1);
     }
 }
 
-pub fn doFire(fire_pixels: &[u32]) {
+pub fn do_fire(fire_pixels: &[u32]) {
     for x in 0..FIRE_WIDTH {
         for y in 1..FIRE_HEIGHT {
             let source = y * FIRE_WIDTH + x;
