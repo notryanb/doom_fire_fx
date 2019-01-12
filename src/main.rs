@@ -67,59 +67,94 @@ fn main() {
                 (0xFF,0xFF,0xFF)
             ];
     
-    let mut pixel_buffer: Vec<Pixel> = Vec::with_capacity((FIRE_WIDTH * FIRE_HEIGHT) as usize);
+    // let mut pixel_buffer: Vec<Pixel> = Vec::with_capacity((FIRE_WIDTH * FIRE_HEIGHT) as usize);
 
-    // Make all Pixels in Pixel Buffer Black and transparent (In case we show the doom.. erm... RUST logo)
-    for mut pixel in 0..pixel_buffer.capacity() { 
-        pixel_buffer.push(Pixel { red: 0x07, green: 0x07, blue: 0x07, alpha: 0});
+    let mut fire_pixels: Vec<u32> = Vec::with_capacity((FIRE_WIDTH * FIRE_HEIGHT) as usize);
+    for mut pixel in 0..fire_pixels.capacity() { 
+        fire_pixels.push(0);
     }
 
     // Set bottom row of Pixels to white.
     for i in 0..FIRE_WIDTH {
         let bottom_x_y = ((FIRE_HEIGHT - 1) * FIRE_WIDTH + i) as usize;
-        pixel_buffer[bottom_x_y] = Pixel { red: 0xFF, green: 0xFF, blue: 0xFF, alpha: 255};
+        fire_pixels[bottom_x_y] = 36;
     }
 
-    for pixel in pixel_buffer.iter() {
-        println!("R: {}, G: {}, B {}", pixel.red, pixel.blue, pixel.green);
+    let pixel_vec = convert_to_pixel(&fire_pixels, &color_palette);
+
+    for num in 0..100 {
+        calculate_fire(&mut fire_pixels);
+        println!("{:?}", &pixel_vec);
     }
-
-
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct Pixel {
-    red: u8,
-    green: u8,
-    blue: u8,
-    alpha: u8,
+    red: u32,
+    green: u32,
+    blue: u32,
+    alpha: u32,
 }
 
+impl Pixel {
+    pub fn is_white(self) -> bool {
+        self.red == 0x07 &&
+        self.green == 0x07 && 
+        self.blue == 0x07
+    }
+}
 
-// pub fn spread_fire(src: ) {
-//     let pixel = fire_pixels[src as usize];
-//     if pixel == 0 {
-//         // fire_pixels[src as usize - FIRE_WIDTH as usize] = 0;
-//     } else {
-//         let mut rng = rand::thread_rng();
-//         let random_num: f64 = rng.gen(); // generates a float between 0 and 1
-//         let random_index = (random_num * 3.0).round() as u32 & 3;
-//         let distance = src - random_index + 1;
-//         // set fire pixels here
+pub fn spread_fire(src: u32, pixel_buffer: &mut Vec<u32>) {
+    let pixel = pixel_buffer[src as usize];
 
-//         // JS Code
-//         // var randIdx = Math.round(Math.random() * 3.0) & 3;
-//         // var dst = src - randIdx + 1;
-//         // firePixels[dst - FIRE_WIDTH ] = pixel - (randIdx & 1);
-//     }
-// }
+    if pixel == 0 {
+        let idx = (src - FIRE_WIDTH) as usize;
+        pixel_buffer[idx] = 0;
+    } else {
+        let mut rng = rand::thread_rng();
+        let random_num: f64 = rng.gen(); // generates a float between 0 and 1
+        let random_index = (random_num * 3.0).round() as u32 & 3; // 0,1,2
+        let distance = src - random_index + 1;
+        let new_index = (distance - FIRE_WIDTH) as usize;
+        pixel_buffer[new_index] = pixel - (random_index & 1);
+    }
+}
 
-// Builds the fire by going through every row over the intial white one.
-// pub fn do_fire() {
-//     for x in 0..FIRE_WIDTH {
-//         for y in 1..FIRE_HEIGHT {
-//             let pixel_buffer_position = y * FIRE_WIDTH + x;
-//             spread_fire(pixel_buffer_position);
-//         }
-//     }
-// }
+pub fn calculate_fire(pixel_buffer: &mut Vec<u32>) {
+    for x in 0..FIRE_WIDTH {
+        for y in 1..FIRE_HEIGHT {
+            let fire_pixel_cursor = y * FIRE_WIDTH + x;
+            spread_fire(fire_pixel_cursor, pixel_buffer);
+        }
+    }
+}
+
+pub fn convert_to_pixel(pixel_buffer: &Vec<u32>, color_palette: &[(u32, u32, u32)]) -> Vec<Pixel> {
+    let mut pixel_vector: Vec<Pixel> = Vec::with_capacity(0);
+
+    for y in 0..FIRE_HEIGHT {
+        for x in 0..FIRE_WIDTH {
+            let cursor = (y * FIRE_WIDTH + x) as usize;
+            let pixel_index = pixel_buffer[cursor] as usize;
+            let color = color_palette[pixel_index];
+
+            let mut pixel = Pixel {
+                red: color.0,
+                green: color.1,
+                blue: color.2,
+                alpha: 0,
+            };
+
+            if pixel.is_white() {
+                pixel.alpha = 0;
+            }
+            else {
+                pixel.alpha = 255;
+            }
+
+            pixel_vector.push(pixel);
+        }
+    }
+
+    pixel_vector
+}
