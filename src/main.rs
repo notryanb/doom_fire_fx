@@ -12,8 +12,8 @@ use rand::prelude::*;
 
 // use std::time::Duration;
 
-const FIRE_WIDTH: u32 = 64;
-const FIRE_HEIGHT: u32 = 128;
+const FIRE_WIDTH: u32 = 640;
+const FIRE_HEIGHT: u32 = 480;
 
 fn main() {
     let color_palette = [
@@ -110,9 +110,9 @@ fn main() {
         let pixel_vec = convert_to_pixel(&fire_pixels, &color_palette);
 
         canvas.with_texture_canvas(&mut fire_texture, |texture_canvas| {
-            for x in 0..FIRE_WIDTH {
-                for y in 0..FIRE_HEIGHT {
-                    println!("{},{}",x ,y);
+            for y in 0..FIRE_HEIGHT {
+                for x in 0..FIRE_WIDTH {
+
                     let pixel_index = (y * FIRE_HEIGHT + x) as usize;
                     let pixel = pixel_vec[pixel_index];
                     texture_canvas.set_draw_color(
