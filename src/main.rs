@@ -1,32 +1,21 @@
+extern crate sdl2;
 extern crate rand;
 
+use sdl2::pixels::Color;
+// use sdl2::pixels::PixelFormatEnum;
+// use sdl2::surface::Surface;
+use sdl2::rect::Point;
+use sdl2::render::{Texture, TextureCreator};
+use sdl2::event::Event;
+use sdl2::keyboard::Keycode;
 use rand::prelude::*;
+
+// use std::time::Duration;
 
 const FIRE_WIDTH: u32 = 64;
 const FIRE_HEIGHT: u32 = 128;
 
-/*
-Source: https://github.com/fabiensanglard/DoomFirePSX/blob/master/flames.html
-    Overall Logic for pixel computation
-    - Set RGB palette, which can be a Vec<Color>
-    - The entire screen should be set to black, but the bottom line set to white.
-    - Every frame, we need to update the palette buffer
-    - Spreading the Fire involves getting one of the pixels in the pixel buffer
-    - If it's the bottom row, don't do anything
-    - If not - get a random nu,ber between 1 - 3, then & operator it with 3.
-    - Take that number, and add it to a random index to get the distance.
-    - We then index into the firePixel buffer that distance from the end and subtract
-        a pixel - the random index & 1
-
-    We then need to take the pixel buffer and convert it to RGB then pipe to the output.
-    - Get the pixel we're iterating over and index into the palette.
-    - Set the reg/green/blue of the converted pixel
-    - if it's all black, calculate the next one to be black
-    - 
-
-*/
 fn main() {
-
     let color_palette = [
                 (0x07,0x07,0x07),
                 (0x1F,0x07,0x07),
@@ -66,26 +55,126 @@ fn main() {
                 (0xEF,0xEF,0xC7),
                 (0xFF,0xFF,0xFF)
             ];
-    
-    // let mut pixel_buffer: Vec<Pixel> = Vec::with_capacity((FIRE_WIDTH * FIRE_HEIGHT) as usize);
-
+   
+    // Create the pixel buffer
     let mut fire_pixels: Vec<u32> = Vec::with_capacity((FIRE_WIDTH * FIRE_HEIGHT) as usize);
-    for mut pixel in 0..fire_pixels.capacity() { 
+    for _ in 0..fire_pixels.capacity() { 
         fire_pixels.push(0);
     }
 
-    // Set bottom row of Pixels to white.
+    // Set bottom row of Pixels to white inside the pixel buffer.
     for i in 0..FIRE_WIDTH {
         let bottom_x_y = ((FIRE_HEIGHT - 1) * FIRE_WIDTH + i) as usize;
         fire_pixels[bottom_x_y] = 36;
     }
+    
+    // Set Up SDL Windox & Canvas
+    let sdl_context = sdl2::init().unwrap();
+    let video_subsystem = sdl_context.video().unwrap();
 
-    let pixel_vec = convert_to_pixel(&fire_pixels, &color_palette);
+    let window = video_subsystem.window("Doom Fire FX", FIRE_WIDTH, FIRE_HEIGHT)
+        .position_centered()
+        .build()
+        .unwrap();
 
-    for num in 0..100 {
+    let mut canvas = window.into_canvas()
+        .target_texture()
+        .present_vsync()
+        .build()
+        .unwrap();
+
+    canvas.set_draw_color(Color::RGBA(0, 0, 0, 255));
+    canvas.clear();
+    canvas.present();
+
+    let texture_creator: TextureCreator<_> = canvas.texture_creator();
+    let mut fire_texture: Texture = texture_creator
+        .create_texture_target(None, FIRE_WIDTH, FIRE_HEIGHT).unwrap();
+
+    let mut event_pump = sdl_context.event_pump().unwrap();
+
+    // let mut frame: u32 = 0;
+
+    'running: loop {
+        for event in event_pump.poll_iter() {
+            match event {
+                Event::Quit {..} |
+                Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
+                    break 'running
+                },
+                _ => {}
+            }
+        }
+
         calculate_fire(&mut fire_pixels);
-        println!("{:?}", &pixel_vec);
+        let pixel_vec = convert_to_pixel(&fire_pixels, &color_palette);
+
+        canvas.with_texture_canvas(&mut fire_texture, |texture_canvas| {
+            for x in 0..FIRE_WIDTH {
+                for y in 0..FIRE_HEIGHT {
+                    println!("{},{}",x ,y);
+                    let pixel_index = (y * FIRE_HEIGHT + x) as usize;
+                    let pixel = pixel_vec[pixel_index];
+                    texture_canvas.set_draw_color(
+                        Color::RGBA(
+                            pixel.red as u8,
+                            pixel.blue as u8,
+                            pixel.green as u8,
+                            255));
+                    texture_canvas.draw_point(Point::new(x as i32, y as i32)).unwrap();
+                }
+            }
+        }).unwrap();
+
+
+        canvas.present();
     }
+
+
+
+
+    /*
+        I think we want to get a canvas FROM a window.
+        - Generate TextureCreator
+        - Create one texture (which we'll update on every iteration?)
+        - set_draw_color to black, maybe there is Color:RGBA instead of RGB?
+        - clear the texture canvas
+        - nested iteration through y, then x
+            - looks like setting the draw color is for drawing a single pixel to whatever we're drawing
+                like a point...
+            - set the draw color to the RGB palette we've calculated
+            - texture_canvas.draw_point(Point::new(x,y both as i32).unwra();
+    */
+
+
+    
+    // 'running: loop {
+    //     canvas.clear();
+
+    //     calculate_fire(&mut fire_pixels);
+    //     let pixel_vec = convert_to_pixel(&fire_pixels, &color_palette);
+
+    //     for pixel in pixel_vec.iter() {
+    //         canvas.set_draw_color(
+    //             Color::RGB(
+    //                 pixel.red as u8,
+    //                 pixel.green as u8,
+    //                 pixel.blue as u8
+    //             ));
+    //     }
+    //     for event in event_pump.poll_iter() {
+    //         match event {
+    //             Event::Quit {..} |
+    //             Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
+    //                 break 'running
+    //             },
+    //             _ => {}
+    //         }
+    //     }
+
+    //     canvas.present();
+    //     ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
+    // }
 }
 
 #[derive(Copy, Clone, Debug)]

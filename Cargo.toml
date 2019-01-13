@@ -5,4 +5,5 @@ authors = ["Ryan Blecher <notryanb@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+sdl2 = "0.32.1"
 rand = "0.6.3"
