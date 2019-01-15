@@ -17,7 +17,7 @@ const FIRE_HEIGHT: u32 = 240;
 
 fn main() {
     let color_palette = [
-        (0x07, 0x07, 0x07),
+        (0x17, 0x17, 0x17),
         (0x1F, 0x07, 0x07),
         (0x2F, 0x0F, 0x07),
         (0x47, 0x0F, 0x07),
@@ -107,12 +107,12 @@ fn main() {
     let texture_creator: TextureCreator<_> = canvas.texture_creator();
 
     let mut fire_texture = texture_creator
-        .create_texture_streaming(PixelFormatEnum::RGB24, FIRE_WIDTH, FIRE_HEIGHT)
+        .create_texture_streaming(PixelFormatEnum::BGR24, FIRE_HEIGHT, FIRE_WIDTH)
         .map_err(|e| e.to_string())
         .unwrap();
 
     canvas.clear();
-    canvas.set_draw_color(Color::RGB(0, 255, 255));
+    canvas.set_draw_color(Color::RGB(0, 0, 0));
     canvas.present();
 
     let mut event_pump = sdl_context.event_pump().unwrap();
@@ -130,21 +130,23 @@ fn main() {
                 _ => {}
             }
         }
-
+        
+        // TODO: Investifate the buffer and figure out it's structure
         fire_texture
             .with_lock(None, |buffer: &mut [u8], pitch: usize| {
                 calculate_fire(&mut pixel_buffer);
                 let pixel_vec = convert_to_pixel(&pixel_buffer, &color_palette);
 
                 for (idx, pixel) in pixel_vec.iter().enumerate() {
-                    buffer[idx] = pixel.red as u8;
-                    buffer[idx + 1] = pixel.blue as u8;
-                    buffer[idx + 2] = pixel.green as u8;
+                    let offset = idx * 3;
+                    buffer[offset] = pixel.blue as u8;
+                    buffer[offset + 1] = pixel.green as u8;
+                    buffer[offset + 2] = pixel.red as u8;
                 }
             })
             .unwrap();
 
-        let rect = Rect::new(0, 0, FIRE_WIDTH * 2, FIRE_HEIGHT * 2);
+        let rect = Rect::new(0, 0, FIRE_WIDTH, FIRE_HEIGHT);
 
         canvas.copy(&fire_texture, None, Some(rect)).unwrap();
         canvas.present();
