@@ -1,6 +1,7 @@
 extern crate sdl2;
 extern crate rand;
 
+use rand::{Rng};
 use sdl2::pixels::Color;
 // use sdl2::pixels::PixelFormatEnum;
 // use sdl2::surface::Surface;
@@ -55,10 +56,10 @@ fn main() {
                 (0xEF,0xEF,0xC7),
                 (0xFF,0xFF,0xFF)
             ];
-   
+
     // Create the pixel buffer
     let mut fire_pixels: Vec<u32> = Vec::with_capacity((FIRE_WIDTH * FIRE_HEIGHT) as usize);
-    for _ in 0..fire_pixels.capacity() { 
+    for _ in 0..fire_pixels.capacity() {
         fire_pixels.push(0);
     }
 
@@ -106,75 +107,35 @@ fn main() {
             }
         }
 
-        calculate_fire(&mut fire_pixels);
-        let pixel_vec = convert_to_pixel(&fire_pixels, &color_palette);
+        let mut rng = rand::thread_rng();
+        let num = rand::thread_rng().gen_range(0, 256) as u8;
+
+        // calculate_fire(&mut fire_pixels);
+        // let pixel_vec = convert_to_pixel(&fire_pixels, &color_palette);
 
         canvas.with_texture_canvas(&mut fire_texture, |texture_canvas| {
             for y in 0..FIRE_HEIGHT {
                 for x in 0..FIRE_WIDTH {
-
-                    let pixel_index = (y * FIRE_HEIGHT + x) as usize;
-                    let pixel = pixel_vec[pixel_index];
-                    texture_canvas.set_draw_color(
-                        Color::RGBA(
-                            pixel.red as u8,
-                            pixel.blue as u8,
-                            pixel.green as u8,
-                            255));
+                    texture_canvas.set_draw_color(Color::RGBA(num % num , num & num, num, num));
                     texture_canvas.draw_point(Point::new(x as i32, y as i32)).unwrap();
+
+                    // let pixel_index = (y * FIRE_HEIGHT + x) as usize;
+                    // let pixel = pixel_vec[pixel_index];
+                    // texture_canvas.set_draw_color(
+                    //     Color::RGBA(
+                    //         pixel.red as u8,
+                    //         pixel.blue as u8,
+                    //         pixel.green as u8,
+                    //         255));
+                    // texture_canvas.draw_point(Point::new(x as i32, y as i32)).unwrap();
                 }
             }
         }).unwrap();
 
 
         canvas.present();
+        canvas.clear();
     }
-
-
-
-
-    /*
-        I think we want to get a canvas FROM a window.
-        - Generate TextureCreator
-        - Create one texture (which we'll update on every iteration?)
-        - set_draw_color to black, maybe there is Color:RGBA instead of RGB?
-        - clear the texture canvas
-        - nested iteration through y, then x
-            - looks like setting the draw color is for drawing a single pixel to whatever we're drawing
-                like a point...
-            - set the draw color to the RGB palette we've calculated
-            - texture_canvas.draw_point(Point::new(x,y both as i32).unwra();
-    */
-
-
-    
-    // 'running: loop {
-    //     canvas.clear();
-
-    //     calculate_fire(&mut fire_pixels);
-    //     let pixel_vec = convert_to_pixel(&fire_pixels, &color_palette);
-
-    //     for pixel in pixel_vec.iter() {
-    //         canvas.set_draw_color(
-    //             Color::RGB(
-    //                 pixel.red as u8,
-    //                 pixel.green as u8,
-    //                 pixel.blue as u8
-    //             ));
-    //     }
-    //     for event in event_pump.poll_iter() {
-    //         match event {
-    //             Event::Quit {..} |
-    //             Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
-    //                 break 'running
-    //             },
-    //             _ => {}
-    //         }
-    //     }
-
-    //     canvas.present();
-    //     ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
-    // }
 }
 
 #[derive(Copy, Clone, Debug)]
