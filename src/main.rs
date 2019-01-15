@@ -110,24 +110,27 @@ fn main() {
         let mut rng = rand::thread_rng();
         let num = rand::thread_rng().gen_range(0, 256) as u8;
 
-        // calculate_fire(&mut fire_pixels);
-        // let pixel_vec = convert_to_pixel(&fire_pixels, &color_palette);
+        calculate_fire(&mut fire_pixels);
+        let pixel_vec = convert_to_pixel(&fire_pixels, &color_palette);
 
         canvas.with_texture_canvas(&mut fire_texture, |texture_canvas| {
-            for y in 0..FIRE_HEIGHT {
-                for x in 0..FIRE_WIDTH {
-                    texture_canvas.set_draw_color(Color::RGBA(num % num , num & num, num, num));
-                    texture_canvas.draw_point(Point::new(x as i32, y as i32)).unwrap();
-
-                    // let pixel_index = (y * FIRE_HEIGHT + x) as usize;
-                    // let pixel = pixel_vec[pixel_index];
-                    // texture_canvas.set_draw_color(
-                    //     Color::RGBA(
-                    //         pixel.red as u8,
-                    //         pixel.blue as u8,
-                    //         pixel.green as u8,
-                    //         255));
+            for x in 0..FIRE_WIDTH {
+                for y in 0..FIRE_HEIGHT {
+                    // texture_canvas.set_draw_color(Color::RGBA(num % num , num & num, num, num));
                     // texture_canvas.draw_point(Point::new(x as i32, y as i32)).unwrap();
+
+                    let pixel_index = (y * FIRE_HEIGHT + x) as usize;
+                    let pixel = pixel_vec[pixel_index];
+                    
+                    println!("{:?}", pixel);
+                   
+                    texture_canvas.set_draw_color(
+                        Color::RGBA(
+                            pixel.red as u8,
+                            pixel.blue as u8,
+                            pixel.green as u8,
+                            255));
+                    texture_canvas.draw_point(Point::new(x as i32, y as i32)).unwrap();
                 }
             }
         }).unwrap();
@@ -147,7 +150,7 @@ pub struct Pixel {
 }
 
 impl Pixel {
-    pub fn is_white(self) -> bool {
+    pub fn is_black(self) -> bool {
         self.red == 0x07 &&
         self.green == 0x07 && 
         self.blue == 0x07
@@ -195,7 +198,7 @@ pub fn convert_to_pixel(pixel_buffer: &Vec<u32>, color_palette: &[(u32, u32, u32
                 alpha: 0,
             };
 
-            if pixel.is_white() {
+            if pixel.is_black() {
                 pixel.alpha = 0;
             }
             else {
