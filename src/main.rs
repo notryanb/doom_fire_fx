@@ -3,9 +3,8 @@ extern crate rand;
 
 use rand::{Rng};
 use sdl2::pixels::Color;
-// use sdl2::pixels::PixelFormatEnum;
-// use sdl2::surface::Surface;
-use sdl2::rect::Point;
+use sdl2::pixels::PixelFormatEnum;
+use sdl2::rect::{Point, Rect};
 use sdl2::render::{Texture, TextureCreator};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
@@ -86,8 +85,11 @@ fn main() {
         .unwrap();
 
     let texture_creator: TextureCreator<_> = canvas.texture_creator();
-    let mut fire_texture: Texture = texture_creator
-        .create_texture_target(None, FIRE_WIDTH, FIRE_HEIGHT).unwrap();
+
+    let mut fire_texture = texture_creator
+        .create_texture_streaming(PixelFormatEnum::RGB24, FIRE_WIDTH, FIRE_HEIGHT)
+        .map_err(|e| e.to_string())
+        .unwrap();
 
     canvas.clear();
     canvas.set_draw_color(Color::RGBA(0, 0, 0, 255));
@@ -110,17 +112,29 @@ fn main() {
         }
 
         fire_texture.with_lock(None, |buffer: &mut [u8], pitch: usize| {
+            calculate_fire(&mut fire_pixels);
+            let pixel_vec = convert_to_pixel(&fire_pixels, &color_palette);
+
             for y in 0..FIRE_HEIGHT {
-                for x in 0..FIRE_HEIGHT {
-                    calculate_fire(&mut fire_pixels);
-                    let pixel_vec = convert_to_pixel(&fire_pixels, &color_palette);
+                for x in 0..FIRE_WIDTH {
                     let pixel_index = (y * FIRE_HEIGHT + x) as usize;
                     let pixel = pixel_vec[pixel_index];
-                    // SET BUFFER[+0, +1, +2] here
+
+                    // let red = rand::thread_rng().gen_range(0, 256) as u8;
+                    // let green = rand::thread_rng().gen_range(0, 256) as u8;
+                    // let blue = rand::thread_rng().gen_range(0, 256) as u8;
+
+                    let offset = ((y * FIRE_WIDTH) + x) as usize;;
+                    buffer[offset] = pixel.red as u8;
+                    buffer[offset + 1] = pixel.blue as u8;
+                    buffer[offset + 2] = pixel.green as u8;
+
                 }
             }
             
         }).unwrap();
+
+        canvas.copy(&fire_texture, None, Some(Rect::new(0, 0, FIRE_WIDTH, FIRE_HEIGHT)));
 
         // calculate_fire(&mut fire_pixels);
         // let pixel_vec = convert_to_pixel(&fire_pixels, &color_palette);
