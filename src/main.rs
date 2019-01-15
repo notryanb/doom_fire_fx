@@ -136,35 +136,15 @@ fn main() {
                 calculate_fire(&mut pixel_buffer);
                 let pixel_vec = convert_to_pixel(&pixel_buffer, &color_palette);
 
-                for (idx, pixel) in pixel_vec.iter().enumeratre() {
+                for (idx, pixel) in pixel_vec.iter().enumerate() {
                     buffer[idx] = pixel.red as u8;
                     buffer[idx + 1] = pixel.blue as u8;
                     buffer[idx + 2] = pixel.green as u8;
                 }
-
-                // for y in 1..FIRE_HEIGHT {
-                //     for x in 0..FIRE_WIDTH {
-                //         let pixel_index = (y * FIRE_HEIGHT + x) as usize;
-                //         let pixel = pixel_vec[pixel_index];
-
-                //         let offset = ((y * FIRE_WIDTH) + x) as usize;
-                //         buffer[offset] = pixel.red as u8;
-                //         buffer[offset + 1] = pixel.blue as u8;
-                //         buffer[offset + 2] = pixel.green as u8;
-                //     }
-                // }
             })
             .unwrap();
 
         let rect = Rect::new(0, 0, FIRE_WIDTH * 2, FIRE_HEIGHT * 2);
-
-        println!(
-            "Top: {:?}, Left: {:?}, BTM: {:?}, RGHT: {:?}",
-            &rect.top(),
-            &rect.left(),
-            &rect.bottom(),
-            &rect.right()
-        );
 
         canvas.copy(&fire_texture, None, Some(rect)).unwrap();
         canvas.present();
@@ -261,7 +241,7 @@ pub fn convert_to_pixel(pixel_buffer: &Vec<u32>, color_palette: &[(u32, u32, u32
     let mut pixel_vector: Vec<Pixel> = Vec::with_capacity(0);
 
     for color_cursor in pixel_buffer.iter() {
-        let color = color_palette[color_cursor as usize];
+        let color = color_palette[*color_cursor as usize];
 
         let mut pixel = Pixel {
                 red: color.0,
@@ -278,29 +258,6 @@ pub fn convert_to_pixel(pixel_buffer: &Vec<u32>, color_palette: &[(u32, u32, u32
 
             pixel_vector.push(pixel);
     } 
-
-    // for y in 0..FIRE_HEIGHT {
-    //     for x in 0..FIRE_WIDTH {
-    //         let cursor = (y * FIRE_WIDTH + x) as usize;
-    //         let pixel_index = pixel_buffer[cursor] as usize;
-    //         let color = color_palette[pixel_index];
-
-    //         let mut pixel = Pixel {
-    //             red: color.0,
-    //             green: color.1,
-    //             blue: color.2,
-    //             alpha: 0,
-    //         };
-
-    //         if pixel.is_black() {
-    //             pixel.alpha = 0;
-    //         } else {
-    //             pixel.alpha = 255;
-    //         }
-
-    //         pixel_vector.push(pixel);
-    //     }
-    // }
 
     pixel_vector
 }
