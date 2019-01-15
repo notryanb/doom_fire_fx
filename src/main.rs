@@ -13,8 +13,8 @@ use rand::prelude::*;
 
 // use std::time::Duration;
 
-const FIRE_WIDTH: u32 = 640;
-const FIRE_HEIGHT: u32 = 480;
+const FIRE_WIDTH: u32 = 320;
+const FIRE_HEIGHT: u32 = 240;
 
 fn main() {
     let color_palette = [
@@ -75,6 +75,7 @@ fn main() {
 
     let window = video_subsystem.window("Doom Fire FX", FIRE_WIDTH, FIRE_HEIGHT)
         .position_centered()
+        .opengl()
         .build()
         .unwrap();
 
@@ -84,19 +85,20 @@ fn main() {
         .build()
         .unwrap();
 
-    canvas.set_draw_color(Color::RGBA(0, 0, 0, 255));
-    canvas.clear();
-    canvas.present();
-
     let texture_creator: TextureCreator<_> = canvas.texture_creator();
     let mut fire_texture: Texture = texture_creator
         .create_texture_target(None, FIRE_WIDTH, FIRE_HEIGHT).unwrap();
 
+    canvas.clear();
+    canvas.set_draw_color(Color::RGBA(0, 0, 0, 255));
+    canvas.present();
+
     let mut event_pump = sdl_context.event_pump().unwrap();
 
     // let mut frame: u32 = 0;
-
     'running: loop {
+        canvas.clear();
+
         for event in event_pump.poll_iter() {
             match event {
                 Event::Quit {..} |
@@ -107,37 +109,56 @@ fn main() {
             }
         }
 
-        let mut rng = rand::thread_rng();
-        let num = rand::thread_rng().gen_range(0, 256) as u8;
-
-        calculate_fire(&mut fire_pixels);
-        let pixel_vec = convert_to_pixel(&fire_pixels, &color_palette);
-
-        canvas.with_texture_canvas(&mut fire_texture, |texture_canvas| {
-            for x in 0..FIRE_WIDTH {
-                for y in 0..FIRE_HEIGHT {
-                    // texture_canvas.set_draw_color(Color::RGBA(num % num , num & num, num, num));
-                    // texture_canvas.draw_point(Point::new(x as i32, y as i32)).unwrap();
-
+        fire_texture.with_lock(None, |buffer: &mut [u8], pitch: usize| {
+            for y in 0..FIRE_HEIGHT {
+                for x in 0..FIRE_HEIGHT {
+                    calculate_fire(&mut fire_pixels);
+                    let pixel_vec = convert_to_pixel(&fire_pixels, &color_palette);
                     let pixel_index = (y * FIRE_HEIGHT + x) as usize;
                     let pixel = pixel_vec[pixel_index];
-                    
-                    println!("{:?}", pixel);
-                   
-                    texture_canvas.set_draw_color(
-                        Color::RGBA(
-                            pixel.red as u8,
-                            pixel.blue as u8,
-                            pixel.green as u8,
-                            255));
-                    texture_canvas.draw_point(Point::new(x as i32, y as i32)).unwrap();
+                    // SET BUFFER[+0, +1, +2] here
                 }
             }
+            
         }).unwrap();
 
+        // calculate_fire(&mut fire_pixels);
+        // let pixel_vec = convert_to_pixel(&fire_pixels, &color_palette);
+
+        // canvas.with_texture_canvas(&mut fire_texture, |texture_canvas| {
+        //     texture_canvas.set_draw_color(Color::RGBA(0, 0, 0, 255));
+        //     let red = rand::thread_rng().gen_range(0, 256) as u8;
+        //     let green = rand::thread_rng().gen_range(0, 256) as u8;
+        //     let blue = rand::thread_rng().gen_range(0, 256) as u8;
+
+        //     texture_canvas.set_draw_color(Color::RGBA(red, green, blue, 255));
+        //     texture_canvas.draw_point(Point::new(100, 100)).expect("Could not draw point");
+
+            // for x in 0..FIRE_WIDTH {
+            //     for y in 0..FIRE_HEIGHT {
+
+                    // texture_canvas.set_draw_color(Color::RGBA(red, green, blue, 255));
+                    // texture_canvas.draw_point(Point::new(x as i32, y as i32)).expect("Could not draw point");
+                    // texture_canvas.clear();
+                    // texture_canvas.present();
+
+                    // let pixel_index = (y * FIRE_HEIGHT + x) as usize;
+                    // let pixel = pixel_vec[pixel_index];
+
+                    // println!("{:?}", pixel);
+
+                    // texture_canvas.set_draw_color(
+                    //     Color::RGBA(
+                    //         pixel.red as u8,
+                    //         pixel.blue as u8,
+                    //         pixel.green as u8,
+                    //         255));
+                    // texture_canvas.draw_point(Point::new(x as i32, y as i32)).unwrap();
+            //     }
+            // }
+        // }).unwrap();
 
         canvas.present();
-        canvas.clear();
     }
 }
 
