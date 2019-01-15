@@ -56,18 +56,34 @@ fn main() {
         (0xFF, 0xFF, 0xFF),
     ];
 
+    /*
+        Fire pixel buffer will look like this for a 3x3 grid
+        
+        [
+            0  { x: 0, y: 0 },
+            0  { x: 1, y: 0 },
+            0  { x: 2, y: 0 },
+            0  { x: 0, y: 1 },
+            0  { x: 1, y: 1 },
+            0  { x: 2, y: 1 },
+            36 { x: 0, y: 2 },
+            36 { x: 1, y: 2 },
+            36 { x: 2, y: 2 }, 
+        ]
+    */
+
     // Create the pixel buffer
-    let mut fire_pixels: Vec<u32> = Vec::with_capacity((FIRE_WIDTH * FIRE_HEIGHT) as usize);
+    let mut pixel_buffer: Vec<u32> = Vec::with_capacity((FIRE_WIDTH * FIRE_HEIGHT) as usize);
 
     // Set all pixels to black
-    for _ in 0..fire_pixels.capacity() {
-        fire_pixels.push(0);
+    for _ in 0..pixel_buffer.capacity() {
+        pixel_buffer.push(0);
     }
 
     // Set bottom row of Pixels to white inside the pixel buffer.
     for i in 0..FIRE_WIDTH {
         let bottom_x_y = ((FIRE_HEIGHT - 1) * FIRE_WIDTH + i) as usize;
-        fire_pixels[bottom_x_y] = 36;
+        pixel_buffer[bottom_x_y] = 36;
     }
 
     // Set Up SDL Windox & Canvas
@@ -117,20 +133,26 @@ fn main() {
 
         fire_texture
             .with_lock(None, |buffer: &mut [u8], pitch: usize| {
-                calculate_fire(&mut fire_pixels);
-                let pixel_vec = convert_to_pixel(&fire_pixels, &color_palette);
+                calculate_fire(&mut pixel_buffer);
+                let pixel_vec = convert_to_pixel(&pixel_buffer, &color_palette);
 
-                for y in 0..FIRE_HEIGHT {
-                    for x in 0..FIRE_WIDTH {
-                        let pixel_index = (y * FIRE_HEIGHT + x) as usize;
-                        let pixel = pixel_vec[pixel_index];
-
-                        let offset = ((y * FIRE_WIDTH) + x) as usize;
-                        buffer[offset] = pixel.red as u8;
-                        buffer[offset + 1] = pixel.blue as u8;
-                        buffer[offset + 2] = pixel.green as u8;
-                    }
+                for (idx, pixel) in pixel_vec.iter().enumeratre() {
+                    buffer[idx] = pixel.red as u8;
+                    buffer[idx + 1] = pixel.blue as u8;
+                    buffer[idx + 2] = pixel.green as u8;
                 }
+
+                // for y in 1..FIRE_HEIGHT {
+                //     for x in 0..FIRE_WIDTH {
+                //         let pixel_index = (y * FIRE_HEIGHT + x) as usize;
+                //         let pixel = pixel_vec[pixel_index];
+
+                //         let offset = ((y * FIRE_WIDTH) + x) as usize;
+                //         buffer[offset] = pixel.red as u8;
+                //         buffer[offset + 1] = pixel.blue as u8;
+                //         buffer[offset + 2] = pixel.green as u8;
+                //     }
+                // }
             })
             .unwrap();
 
@@ -163,41 +185,85 @@ impl Pixel {
     }
 }
 
-pub fn spread_fire(src: u32, pixel_buffer: &mut Vec<u32>) {
-    let pixel = pixel_buffer[src as usize];
+// This function will be called by iterating down columns left to right.
+pub fn spread_fire(cursor: u32, pixel_buffer: &mut Vec<u32>) {
 
-    if pixel == 0 {
-        let idx = (src - FIRE_WIDTH) as usize;
+    let pixel = pixel_buffer[cursor as usize];
+
+    /*
+        First iteration will be 0
+        in a 3x3 grid, the idx calculation will be 3 - 3 = 0
+        the very first pixel 0,0 will be = 0
+
+        Second iteration pixel won't be 0, so 
+        calculation = 8 - random number, which will be close to original number, as this corresponds to the shade
+        then set the cursor position in the pixel_buffer to that close shade. The shades are actually indexes into the 
+        color_palette.
+    */
+    if pixel == 0 { // black pixel
+        let idx = (cursor - FIRE_WIDTH) as usize;
         pixel_buffer[idx] = 0;
     } else {
         let mut rng = rand::thread_rng();
         let random_num: f64 = rng.gen(); // generates a float between 0 and 1
         let random_index = (random_num * 3.0).round() as u32 & 3; // 0,1,2
-        let distance = src - random_index + 1;
+        let distance = cursor - random_index + 1;
         let new_index = (distance - FIRE_WIDTH) as usize;
         pixel_buffer[new_index] = pixel - (random_index & 1);
     }
 }
 
+
+/*
+    Fire pixel buffer will look like this for a 3x3 grid.
+    The buffer is ordered by row then column. 
+    ie. every FIRE_WIDTH indexes represents one ROW, starting at the top of the image.
+    The last row represents the bottom of the image, AKA the entire white row.
+
+    This function iterates down by column.
+    ie. starts at the top of the first column, works it's way down,
+    then moves into the next column to the right.
+    
+    [
+        0  { x: 0, y: 0 }, never touched, this is the top of the fire where it doesn't go
+        0  { x: 1, y: 0 }, never touched, this is the top of the fire where it doesn't go
+        0  { x: 2, y: 0 }, never touched, this is the top of the fire where it doesn't go
+        0  { x: 0, y: 1 }, <- 1. cursor first iteration
+        0  { x: 1, y: 1 }, <- 3. cursor third iteration
+        0  { x: 2, y: 1 }, <- 3. cursor fifth iteration
+        36 { x: 0, y: 2 }, <- 2. cursor second iteration
+        36 { x: 1, y: 2 }, <- 4. cursor fourth iteration
+        36 { x: 2, y: 2 }, <- 6. cursor sixth iteration
+    ]
+*/
 pub fn calculate_fire(pixel_buffer: &mut Vec<u32>) {
     for x in 0..FIRE_WIDTH {
         for y in 1..FIRE_HEIGHT {
+            /*  
+                3x3 Grid
+                - when x = 0, y = 1, cursor = 3
+                - when x = 0, y = 2, cursor = 6
+                - when x = 1, y = 1, cursor = 4
+                - when x = 1, y = 2, cursor = 7
+                - when x = 2, y = 1, cursor = 5
+                - when x = 2, y = 2, cursor = 8
+
+            */
             let fire_pixel_cursor = y * FIRE_WIDTH + x;
             spread_fire(fire_pixel_cursor, pixel_buffer);
         }
     }
 }
 
+
 pub fn convert_to_pixel(pixel_buffer: &Vec<u32>, color_palette: &[(u32, u32, u32)]) -> Vec<Pixel> {
+    // THe Pixel vector should end up being the same length as pixel_buffer.
     let mut pixel_vector: Vec<Pixel> = Vec::with_capacity(0);
 
-    for y in 0..FIRE_HEIGHT {
-        for x in 0..FIRE_WIDTH {
-            let cursor = (y * FIRE_WIDTH + x) as usize;
-            let pixel_index = pixel_buffer[cursor] as usize;
-            let color = color_palette[pixel_index];
+    for color_cursor in pixel_buffer.iter() {
+        let color = color_palette[color_cursor as usize];
 
-            let mut pixel = Pixel {
+        let mut pixel = Pixel {
                 red: color.0,
                 green: color.1,
                 blue: color.2,
@@ -211,8 +277,30 @@ pub fn convert_to_pixel(pixel_buffer: &Vec<u32>, color_palette: &[(u32, u32, u32
             }
 
             pixel_vector.push(pixel);
-        }
-    }
+    } 
+
+    // for y in 0..FIRE_HEIGHT {
+    //     for x in 0..FIRE_WIDTH {
+    //         let cursor = (y * FIRE_WIDTH + x) as usize;
+    //         let pixel_index = pixel_buffer[cursor] as usize;
+    //         let color = color_palette[pixel_index];
+
+    //         let mut pixel = Pixel {
+    //             red: color.0,
+    //             green: color.1,
+    //             blue: color.2,
+    //             alpha: 0,
+    //         };
+
+    //         if pixel.is_black() {
+    //             pixel.alpha = 0;
+    //         } else {
+    //             pixel.alpha = 255;
+    //         }
+
+    //         pixel_vector.push(pixel);
+    //     }
+    // }
 
     pixel_vector
 }
