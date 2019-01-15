@@ -91,7 +91,7 @@ fn main() {
     let video_subsystem = sdl_context.video().unwrap();
 
     let window = video_subsystem
-        .window("Doom Fire FX", FIRE_WIDTH, FIRE_HEIGHT)
+        .window("notryanb - Doom Fire FX", FIRE_WIDTH, FIRE_HEIGHT)
         .position_centered()
         .opengl()
         .build()
