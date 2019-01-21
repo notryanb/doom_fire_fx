@@ -4,8 +4,8 @@ extern crate sdl2;
 use rand::Rng;
 use sdl2::pixels::Color;
 use sdl2::pixels::PixelFormatEnum;
-use sdl2::rect::{Point, Rect};
-use sdl2::render::{Texture, TextureCreator};
+use sdl2::rect::{Rect};
+use sdl2::render::{TextureCreator};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use rand::prelude::*;
@@ -13,7 +13,9 @@ use rand::prelude::*;
 // use std::time::Duration;
 
 const FIRE_WIDTH: u32 = 320;
-const FIRE_HEIGHT: u32 = 240;
+const FIRE_HEIGHT: u32 = 168;
+const CANVAS_WIDTH: u32 = 640;
+const CANVAS_HEIGHT:u32 = 509;
 
 fn main() {
     let color_palette = [
@@ -91,9 +93,8 @@ fn main() {
     let video_subsystem = sdl_context.video().unwrap();
 
     let window = video_subsystem
-        .window("notryanb - Doom Fire FX", FIRE_WIDTH, FIRE_HEIGHT)
+        .window("notryanb - Doom Fire FX", CANVAS_WIDTH, CANVAS_HEIGHT)
         .position_centered()
-        .opengl()
         .build()
         .unwrap();
 
@@ -107,12 +108,12 @@ fn main() {
     let texture_creator: TextureCreator<_> = canvas.texture_creator();
 
     let mut fire_texture = texture_creator
-        .create_texture_streaming(PixelFormatEnum::BGR24, FIRE_HEIGHT, FIRE_WIDTH)
+        .create_texture_streaming(PixelFormatEnum::RGB24, FIRE_WIDTH, FIRE_HEIGHT)
         .map_err(|e| e.to_string())
         .unwrap();
 
     canvas.clear();
-    canvas.set_draw_color(Color::RGB(0, 0, 0));
+    canvas.set_draw_color(Color::RGBA(0, 0, 0, 0));
     canvas.present();
 
     let mut event_pump = sdl_context.event_pump().unwrap();
@@ -131,22 +132,21 @@ fn main() {
             }
         }
         
-        // TODO: Investifate the buffer and figure out it's structure
         fire_texture
-            .with_lock(None, |buffer: &mut [u8], pitch: usize| {
+            .with_lock(None, |buffer: &mut [u8], _pitch: usize| {
                 calculate_fire(&mut pixel_buffer);
                 let pixel_vec = convert_to_pixel(&pixel_buffer, &color_palette);
 
                 for (idx, pixel) in pixel_vec.iter().enumerate() {
                     let offset = idx * 3;
-                    buffer[offset] = pixel.blue as u8;
+                    buffer[offset] = pixel.red as u8;
                     buffer[offset + 1] = pixel.green as u8;
-                    buffer[offset + 2] = pixel.red as u8;
+                    buffer[offset + 2] = pixel.blue as u8;
                 }
             })
             .unwrap();
 
-        let rect = Rect::new(0, 0, FIRE_WIDTH, FIRE_HEIGHT);
+        let rect = Rect::new(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
         canvas.copy(&fire_texture, None, Some(rect)).unwrap();
         canvas.present();
