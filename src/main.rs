@@ -2,15 +2,16 @@ extern crate rand;
 extern crate sdl2;
 
 use rand::Rng;
+use sdl2::image::LoadTexture;
 use sdl2::pixels::Color;
 use sdl2::pixels::PixelFormatEnum;
 use sdl2::rect::{Rect};
 use sdl2::render::{TextureCreator};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
-use rand::prelude::*;
 
-// use std::time::Duration;
+use std::fs::File;
+
 
 const FIRE_WIDTH: u32 = 320;
 const FIRE_HEIGHT: u32 = 168;
@@ -105,6 +106,12 @@ fn main() {
         .build()
         .unwrap();
 
+    let image_texture_creator = canvas.texture_creator();
+
+    let logo = image_texture_creator
+        .load_texture("./src/doom_logo.png")
+        .unwrap();
+
     let texture_creator: TextureCreator<_> = canvas.texture_creator();
 
     let mut fire_texture = texture_creator
@@ -142,13 +149,16 @@ fn main() {
                     buffer[offset] = pixel.red as u8;
                     buffer[offset + 1] = pixel.green as u8;
                     buffer[offset + 2] = pixel.blue as u8;
+                    // buffer[offset + 3] = pixel.alpha as u8;
                 }
             })
             .unwrap();
 
         let rect = Rect::new(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+        let logo_rect = Rect::new(100, 100, 300, 180);
 
         canvas.copy(&fire_texture, None, Some(rect)).unwrap();
+        canvas.copy(&logo, None, Some(logo_rect)).unwrap();
         canvas.present();
     }
 }
