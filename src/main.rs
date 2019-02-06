@@ -5,18 +5,15 @@ use rand::Rng;
 use sdl2::image::LoadTexture;
 use sdl2::pixels::Color;
 use sdl2::pixels::PixelFormatEnum;
-use sdl2::rect::{Rect};
+use sdl2::rect::Rect;
 use sdl2::render::{BlendMode, TextureCreator};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 
-use std::fs::File;
-
-
 const FIRE_WIDTH: u32 = 320;
 const FIRE_HEIGHT: u32 = 168;
 const CANVAS_WIDTH: u32 = 640;
-const CANVAS_HEIGHT:u32 = 509;
+const CANVAS_HEIGHT: u32 = 509;
 
 fn main() {
     let color_palette = [
@@ -90,7 +87,7 @@ fn main() {
     }
 
     // Scrolling for keeping track of when fire goes away and logo rising
-    let mut y_scrolling = 440;
+    let mut y_scrolling = 540;
 
     // Set Up SDL Windox & Canvas
     let sdl_context = sdl2::init().unwrap();
@@ -123,7 +120,7 @@ fn main() {
 
     let texture_creator: TextureCreator<_> = canvas.texture_creator();
 
-    // RGB24 splits each pixel into 3 * 8bit sections. 
+    // RGB24 splits each pixel into 3 * 8bit sections.
     let mut fire_texture = texture_creator
         .create_texture_streaming(PixelFormatEnum::RGBA8888, FIRE_WIDTH, FIRE_HEIGHT)
         .map_err(|e| e.to_string())
@@ -148,7 +145,7 @@ fn main() {
                 _ => {}
             }
         }
-        
+
         fire_texture
             .with_lock(None, |buffer: &mut [u8], _pitch: usize| {
                 calculate_fire(&mut pixel_buffer);
@@ -166,11 +163,9 @@ fn main() {
 
         &fire_texture.set_blend_mode(BlendMode::Blend);
 
-
         if y_scrolling != 70 {
             y_scrolling -= 2;
-        }
-        else {
+        } else {
             for y in (161..168).rev() {
                 for x in 0..FIRE_WIDTH {
                     let index = (y * FIRE_WIDTH + x) as usize;
@@ -181,12 +176,11 @@ fn main() {
                         pixel_buffer[index] -= random_decrement;
                     }
                 }
-
             }
         }
 
         let rect = Rect::new(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-        let logo_rect = Rect::new(40, y_scrolling, 600, 450);
+        let logo_rect = Rect::new(40, y_scrolling, CANVAS_WIDTH - 75, 450);
 
         canvas.copy(&logo, None, Some(logo_rect)).unwrap();
         canvas.copy(&fire_texture, None, Some(rect)).unwrap();
@@ -210,7 +204,6 @@ impl Pixel {
 
 // This function will be called by iterating down columns left to right.
 pub fn spread_fire(cursor: u32, pixel_buffer: &mut Vec<u32>) {
-
     let pixel = pixel_buffer[cursor as usize];
 
     /*
@@ -223,7 +216,8 @@ pub fn spread_fire(cursor: u32, pixel_buffer: &mut Vec<u32>) {
         then set the cursor position in the pixel_buffer to that close shade. The shades are actually indexes into the 
         color_palette.
     */
-    if pixel == 0 { // black pixel
+    if pixel == 0 {
+        // black pixel
         let idx = (cursor - FIRE_WIDTH) as usize;
         pixel_buffer[idx] = 0;
     } else {
@@ -235,7 +229,6 @@ pub fn spread_fire(cursor: u32, pixel_buffer: &mut Vec<u32>) {
         pixel_buffer[new_index] = pixel - (random_index & 1);
     }
 }
-
 
 /*
     Fire pixel buffer will look like this for a 3x3 grid.
@@ -278,7 +271,6 @@ pub fn calculate_fire(pixel_buffer: &mut Vec<u32>) {
     }
 }
 
-
 pub fn convert_to_pixel(pixel_buffer: &Vec<u32>, color_palette: &[(u32, u32, u32)]) -> Vec<Pixel> {
     // The Pixel vector should end up being the same length as pixel_buffer.
     let mut pixel_vector: Vec<Pixel> = Vec::with_capacity(0);
@@ -287,18 +279,18 @@ pub fn convert_to_pixel(pixel_buffer: &Vec<u32>, color_palette: &[(u32, u32, u32
         let color = color_palette[*color_cursor as usize];
 
         let mut pixel = Pixel {
-                red: color.0,
-                green: color.1,
-                blue: color.2,
-                alpha: 0,
-            };
+            red: color.0,
+            green: color.1,
+            blue: color.2,
+            alpha: 0,
+        };
 
-            if !pixel.is_black() {
-                pixel.alpha = 255;
-            }
+        if !pixel.is_black() {
+            pixel.alpha = 255;
+        }
 
-            pixel_vector.push(pixel);
-    } 
+        pixel_vector.push(pixel);
+    }
 
     pixel_vector
 }
