@@ -108,8 +108,14 @@ fn main() {
 
     let image_texture_creator = canvas.texture_creator();
 
-    let logo = image_texture_creator
+    let doom_logo = image_texture_creator
         .load_texture("./src/doom_logo.png")
+        .unwrap();
+
+    // Ferris Logo:
+    // http://enosart.com/animated-crab-9974/
+    let logo = image_texture_creator
+        .load_texture("./src/ferris_logo.png")
         .unwrap();
 
     let texture_creator: TextureCreator<_> = canvas.texture_creator();
@@ -121,7 +127,7 @@ fn main() {
         .unwrap();
 
     canvas.clear();
-    canvas.set_draw_color(Color::RGBA(254, 254, 254, 254));
+    canvas.set_draw_color(Color::RGBA(18, 18, 18, 255));
     canvas.present();
 
     let mut event_pump = sdl_context.event_pump().unwrap();
@@ -146,7 +152,6 @@ fn main() {
                 let pixel_vec = convert_to_pixel(&pixel_buffer, &color_palette);
 
                 for (idx, pixel) in pixel_vec.iter().enumerate() {
-                    println!("{:?}", pixel.alpha);
                     let offset = idx * 4;
                     buffer[offset] = pixel.alpha as u8;
                     buffer[offset + 1] = pixel.blue as u8;
@@ -159,7 +164,7 @@ fn main() {
         &fire_texture.set_blend_mode(BlendMode::Blend);
 
         let rect = Rect::new(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-        let logo_rect = Rect::new(100, 100, 300, 180);
+        let logo_rect = Rect::new(40, 50, 600, 450);
 
         canvas.copy(&logo, None, Some(logo_rect)).unwrap();
         canvas.copy(&fire_texture, None, Some(rect)).unwrap();
@@ -177,7 +182,7 @@ pub struct Pixel {
 
 impl Pixel {
     pub fn is_black(self) -> bool {
-        self.red == 0x07 && self.green == 0x07 && self.blue == 0x07
+        self.red <= 0x17 && self.green <= 0x17 && self.blue <= 0x17
     }
 }
 
@@ -253,7 +258,7 @@ pub fn calculate_fire(pixel_buffer: &mut Vec<u32>) {
 
 
 pub fn convert_to_pixel(pixel_buffer: &Vec<u32>, color_palette: &[(u32, u32, u32)]) -> Vec<Pixel> {
-    // THe Pixel vector should end up being the same length as pixel_buffer.
+    // The Pixel vector should end up being the same length as pixel_buffer.
     let mut pixel_vector: Vec<Pixel> = Vec::with_capacity(0);
 
     for color_cursor in pixel_buffer.iter() {
@@ -266,9 +271,7 @@ pub fn convert_to_pixel(pixel_buffer: &Vec<u32>, color_palette: &[(u32, u32, u32
                 alpha: 0,
             };
 
-            if pixel.is_black() {
-                pixel.alpha = 0;
-            } else {
+            if !pixel.is_black() {
                 pixel.alpha = 255;
             }
 
