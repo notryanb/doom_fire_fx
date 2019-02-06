@@ -89,6 +89,9 @@ fn main() {
         pixel_buffer[bottom_x_y] = 36;
     }
 
+    // Scrolling for keeping track of when fire goes away and logo rising
+    let mut y_scrolling = 440;
+
     // Set Up SDL Windox & Canvas
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
@@ -163,8 +166,27 @@ fn main() {
 
         &fire_texture.set_blend_mode(BlendMode::Blend);
 
+
+        if y_scrolling != 70 {
+            y_scrolling -= 2;
+        }
+        else {
+            for y in (161..168).rev() {
+                for x in 0..FIRE_WIDTH {
+                    let index = (y * FIRE_WIDTH + x) as usize;
+                    if pixel_buffer[index] > 0 {
+                        let mut rng = rand::thread_rng();
+                        let random_num: f64 = rng.gen(); // generates a float between 0 and 1
+                        let random_decrement = random_num.round() as u32 & 3;
+                        pixel_buffer[index] -= random_decrement;
+                    }
+                }
+
+            }
+        }
+
         let rect = Rect::new(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-        let logo_rect = Rect::new(40, 50, 600, 450);
+        let logo_rect = Rect::new(40, y_scrolling, 600, 450);
 
         canvas.copy(&logo, None, Some(logo_rect)).unwrap();
         canvas.copy(&fire_texture, None, Some(rect)).unwrap();
