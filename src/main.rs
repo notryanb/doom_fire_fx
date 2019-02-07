@@ -19,7 +19,7 @@ const CANVAS_HEIGHT: u32 = 509;
 
 fn main() {
     let color_palette = [
-        (0x17, 0x17, 0x17),
+        (0x07, 0x07, 0x07),
         (0x1F, 0x07, 0x07),
         (0x2F, 0x0F, 0x07),
         (0x47, 0x0F, 0x07),
@@ -129,7 +129,7 @@ fn main() {
         .unwrap();
 
     canvas.clear();
-    canvas.set_draw_color(Color::RGBA(18, 18, 18, 255));
+    canvas.set_draw_color(Color::RGBA(0x07, 0x07, 0x07, 255));
     canvas.present();
 
     let mut event_pump = sdl_context.event_pump().unwrap();
