@@ -14,8 +14,8 @@ mod pixel;
 
 const FIRE_WIDTH: u32 = 320;
 const FIRE_HEIGHT: u32 = 168;
-const CANVAS_WIDTH: u32 = 640;
-const CANVAS_HEIGHT: u32 = 509;
+const CANVAS_WIDTH: u32 = 800;
+const CANVAS_HEIGHT: u32 = 600;
 
 fn main() {
     let color_palette = [
@@ -211,8 +211,7 @@ pub fn spread_fire(cursor: u32, pixel_buffer: &mut Vec<u32>) {
         pixel_buffer[idx] = 0;
     } else {
         let mut rng = rand::thread_rng();
-        let random_num: f64 = rng.gen(); // generates a float between 0 and 1
-        let random_index = (random_num * 3.0).round() as u32 & 3; // 0,1,2
+        let random_index = (rng.gen::<f64>() * 3.0).round() as u32 & 3; // 0,1,2
         let distance = cursor - random_index + 1;
         let new_index = (distance - FIRE_WIDTH) as usize;
         pixel_buffer[new_index] = pixel - (random_index & 1);
