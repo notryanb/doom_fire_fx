@@ -10,6 +10,8 @@ use sdl2::render::{BlendMode, TextureCreator};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 
+mod pixel;
+
 const FIRE_WIDTH: u32 = 320;
 const FIRE_HEIGHT: u32 = 168;
 const CANVAS_WIDTH: u32 = 640;
@@ -108,7 +110,7 @@ fn main() {
 
     let image_texture_creator = canvas.texture_creator();
 
-    let doom_logo = image_texture_creator
+    let _doom_logo = image_texture_creator
         .load_texture("./src/doom_logo.png")
         .unwrap();
 
@@ -120,7 +122,7 @@ fn main() {
 
     let texture_creator: TextureCreator<_> = canvas.texture_creator();
 
-    // RGB24 splits each pixel into 3 * 8bit sections.
+    // RGBA8888 splits each pixel into 4 * 8 bit sections
     let mut fire_texture = texture_creator
         .create_texture_streaming(PixelFormatEnum::RGBA8888, FIRE_WIDTH, FIRE_HEIGHT)
         .map_err(|e| e.to_string())
@@ -188,19 +190,6 @@ fn main() {
     }
 }
 
-#[derive(Copy, Clone, Debug)]
-pub struct Pixel {
-    red: u32,
-    green: u32,
-    blue: u32,
-    alpha: u32,
-}
-
-impl Pixel {
-    pub fn is_black(self) -> bool {
-        self.red <= 0x17 && self.green <= 0x17 && self.blue <= 0x17
-    }
-}
 
 // This function will be called by iterating down columns left to right.
 pub fn spread_fire(cursor: u32, pixel_buffer: &mut Vec<u32>) {
@@ -271,14 +260,14 @@ pub fn calculate_fire(pixel_buffer: &mut Vec<u32>) {
     }
 }
 
-pub fn convert_to_pixel(pixel_buffer: &Vec<u32>, color_palette: &[(u32, u32, u32)]) -> Vec<Pixel> {
+pub fn convert_to_pixel(pixel_buffer: &Vec<u32>, color_palette: &[(u32, u32, u32)]) -> Vec<pixel::Pixel> {
     // The Pixel vector should end up being the same length as pixel_buffer.
-    let mut pixel_vector: Vec<Pixel> = Vec::with_capacity(0);
+    let mut pixel_vector: Vec<pixel::Pixel> = Vec::with_capacity(0);
 
     for color_cursor in pixel_buffer.iter() {
         let color = color_palette[*color_cursor as usize];
 
-        let mut pixel = Pixel {
+        let mut pixel = pixel::Pixel {
             red: color.0,
             green: color.1,
             blue: color.2,
