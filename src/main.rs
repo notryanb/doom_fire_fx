@@ -127,8 +127,10 @@ fn main() {
             .with_lock(None, |buffer: &mut [u8], _pitch: usize| {
                 calculate_fire(&mut pixel_buffer);
 
-                for (idx, _pixel_cursor) in pixel_buffer.iter().enumerate() {
-                    match &color_palette[idx..(idx + 3)] {
+                for (idx, pixel_cursor) in pixel_buffer.iter().enumerate() {
+                    let start = (*pixel_cursor * 3) as usize;
+                    let end = start + 3;
+                    match &color_palette[start..end] {
                         [red, green, blue] => {
                             let mut alpha = 255;
 
@@ -137,7 +139,7 @@ fn main() {
                             }
 
                             let offset = idx * 4;
-                            buffer[offset] = alpha as u8; 
+                            buffer[offset] = alpha as u8;
                             buffer[offset + 1] = *blue;
                             buffer[offset + 2] = *green;
                             buffer[offset + 3] = *red;
