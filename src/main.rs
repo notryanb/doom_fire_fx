@@ -169,7 +169,7 @@ pub fn spread_fire(cursor: u32, pixel_buffer: &mut [u8]) {
     }
 }
 
-pub fn calculate_fire(pixel_buffer: &mut Vec<u8>) {
+pub fn calculate_fire(pixel_buffer: &mut [u8]) {
     for x in 0..FIRE_WIDTH {
         for y in 1..FIRE_HEIGHT {
             let fire_pixel_cursor = y * FIRE_WIDTH + x;
