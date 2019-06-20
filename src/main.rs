@@ -114,7 +114,7 @@ fn main() {
                             buffer[offset + 2] = *green;
                             buffer[offset + 3] = *red;
                         }
-                        _ => println!("Something..."),
+                        _ => (),
                     }
                 }
             })
@@ -149,10 +149,6 @@ fn main() {
 
 // This function will be called by iterating down columns left to right.
 pub fn spread_fire(cursor: u32, pixel_buffer: &mut [u8]) {
-    assert!(
-        cursor <= pixel_buffer.len() as u32,
-        "cursor extends beyond pixel buffer size"
-    );
     let pixel = pixel_buffer[cursor as usize];
 
     if pixel == 0 {
