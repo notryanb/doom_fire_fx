@@ -1,13 +1,17 @@
 [package]
 name = "fire_fx"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Ryan Blecher <notryanb@gmail.com>"]
 edition = "2018"
 
-[dependencies]
-rand = "0.6.3"
+[lib]
+name = "doom_fire_fx"
+crate-type = ["cdylib", "rlib"]
 
-[dependencies.sdl2]
-version = "0.32.1"
-default-features = false
-features = ["image"]
+[dependencies]
+druid = { git="https://github.com/linebender/druid.git" }
+getrandom = { version = "0.2", features = ["js"] }
+rand = { version = "0.8.3", features=["getrandom"] }
+
+wasm-bindgen = "0.2.67"
+console_error_panic_hook = "0.1.6"
